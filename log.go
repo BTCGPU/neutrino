@@ -1,10 +1,10 @@
 package neutrino
 
 import (
-	"github.com/btcsuite/btcd/addrmgr"
-	"github.com/btcsuite/btcd/blockchain"
-	"github.com/btcsuite/btcd/peer"
-	"github.com/btcsuite/btcd/txscript"
+	"github.com/btgsuite/btgd/addrmgr"
+	"github.com/btgsuite/btgd/blockchain"
+	"github.com/btgsuite/btgd/peer"
+	"github.com/btgsuite/btgd/txscript"
 	"github.com/btcsuite/btclog"
 )
 

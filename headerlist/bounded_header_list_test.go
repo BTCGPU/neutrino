@@ -72,11 +72,11 @@ func TestBoundedMemoryChainResetHeaderState(t *testing.T) {
 
 	// Additionally, both the front and back of the chain should be
 	// identical to the node above.
-	if *memChain.Front() != newNode {
+	if newNode.Equals(*memChain.Front()) == false {
 		t.Fatalf("wrong node, expected %v, got %v", newNode,
 			memChain.Front())
 	}
-	if *memChain.Back() != newNode {
+	if newNode.Equals(*memChain.Back()) == false {
 		t.Fatalf("wrong node, expected %v, got %v", newNode,
 			memChain.Back())
 	}

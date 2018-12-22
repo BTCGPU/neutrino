@@ -12,17 +12,17 @@ import (
 	"testing"
 	"time"
 
-	"github.com/btcsuite/btcd/blockchain"
-	"github.com/btcsuite/btcd/chaincfg"
-	"github.com/btcsuite/btcd/chaincfg/chainhash"
-	"github.com/btcsuite/btcd/wire"
-	"github.com/btcsuite/btcutil"
-	"github.com/btcsuite/btcutil/gcs"
-	"github.com/btcsuite/btcutil/gcs/builder"
-	"github.com/lightninglabs/neutrino/cache"
-	"github.com/lightninglabs/neutrino/cache/lru"
-	"github.com/lightninglabs/neutrino/filterdb"
-	"github.com/lightninglabs/neutrino/headerfs"
+	"github.com/btgsuite/btgd/blockchain"
+	"github.com/btgsuite/btgd/chaincfg"
+	"github.com/btgsuite/btgd/chaincfg/chainhash"
+	"github.com/btgsuite/btgd/wire"
+	btcutil "github.com/btgsuite/btgutil"
+	"github.com/btgsuite/btgutil/gcs"
+	"github.com/btgsuite/btgutil/gcs/builder"
+	"github.com/BTCGPU/neutrino/cache"
+	"github.com/BTCGPU/neutrino/cache/lru"
+	"github.com/BTCGPU/neutrino/filterdb"
+	"github.com/BTCGPU/neutrino/headerfs"
 )
 
 var (

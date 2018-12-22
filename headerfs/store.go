@@ -8,13 +8,13 @@ import (
 	"path/filepath"
 	"sync"
 
-	"github.com/btcsuite/btcd/blockchain"
-	"github.com/btcsuite/btcd/chaincfg"
-	"github.com/btcsuite/btcd/chaincfg/chainhash"
-	"github.com/btcsuite/btcd/wire"
-	"github.com/btcsuite/btcutil/gcs/builder"
-	"github.com/btcsuite/btcwallet/waddrmgr"
-	"github.com/btcsuite/btcwallet/walletdb"
+	"github.com/btgsuite/btgd/blockchain"
+	"github.com/btgsuite/btgd/chaincfg"
+	"github.com/btgsuite/btgd/chaincfg/chainhash"
+	"github.com/btgsuite/btgd/wire"
+	"github.com/btgsuite/btgutil/gcs/builder"
+	"github.com/btgsuite/btgwallet/waddrmgr"
+	"github.com/btgsuite/btgwallet/walletdb"
 )
 
 // BlockHeaderStore is an interface that provides an abstraction for a generic
@@ -188,7 +188,7 @@ func NewBlockHeaderStore(filePath string, db walletdb.DB,
 
 	// First, we'll compute the size of the current file so we can
 	// calculate the latest header written to disk.
-	fileHeight := uint32(fileInfo.Size()/80) - 1
+	fileHeight := uint32(fileInfo.Size()/int64(HeaderSize)) - 1
 
 	// Using the file's current height, fetch the latest on-disk header.
 	latestFileHeader, err := bhs.readHeader(fileHeight)
@@ -379,9 +379,13 @@ func (h *blockHeaderStore) WriteHeaders(hdrs ...BlockHeader) error {
 	// Next, we'll write out all the passed headers in series into the
 	// buffer we just extracted from the pool.
 	for _, header := range hdrs {
-		if err := header.Serialize(headerBuf); err != nil {
+		b := new(bytes.Buffer)
+		if err := header.Serialize(b); err != nil {
 			return err
 		}
+
+		padded := padEnd(b.Bytes(), int(HeaderSize))
+		headerBuf.Write(padded)
 	}
 
 	// With all the headers written to the buffer, we'll now write out the
@@ -664,7 +668,7 @@ func NewFilterHeaderStore(filePath string, db walletdb.DB,
 
 	// First, we'll compute the size of the current file so we can
 	// calculate the latest header written to disk.
-	fileHeight := uint32(fileInfo.Size()/32) - 1
+	fileHeight := uint32(fileInfo.Size())/HeaderSize - 1
 
 	// Using the file's current height, fetch the latest on-disk header.
 	latestFileHeader, err := fhs.readHeader(fileHeight)
@@ -741,6 +745,19 @@ func (f *FilterHeader) toIndexEntry() headerEntry {
 	}
 }
 
+// padEnd returns (size) bytes from input (bb)
+// Short bb gets zeros prefixed end
+func padEnd(bb []byte, size int) []byte {
+	l := len(bb)
+	if l == size {
+		return bb
+	}
+
+	tmp := make([]byte, size)
+	copy(tmp[0:size-l], bb)
+	return tmp
+}
+
 // WriteHeaders writes a batch of filter headers to persistent storage. The
 // headers themselves are appended to the flat file, and then the index updated
 // to reflect the new entires.
@@ -766,7 +783,7 @@ func (f *FilterHeaderStore) WriteHeaders(hdrs ...FilterHeader) error {
 	// Next, we'll write out all the passed headers in series into the
 	// buffer we just extracted from the pool.
 	for _, header := range hdrs {
-		if _, err := headerBuf.Write(header.FilterHash[:]); err != nil {
+		if _, err := headerBuf.Write(padEnd(header.FilterHash[:], int(HeaderSize))); err != nil {
 			return err
 		}
 	}
