@@ -668,7 +668,7 @@ func NewFilterHeaderStore(filePath string, db walletdb.DB,
 
 	// First, we'll compute the size of the current file so we can
 	// calculate the latest header written to disk.
-	fileHeight := uint32(fileInfo.Size())/HeaderSize - 1
+	fileHeight := uint32(fileInfo.Size())/HeaderFilterSize - 1
 
 	// Using the file's current height, fetch the latest on-disk header.
 	latestFileHeader, err := fhs.readHeader(fileHeight)
@@ -783,7 +783,7 @@ func (f *FilterHeaderStore) WriteHeaders(hdrs ...FilterHeader) error {
 	// Next, we'll write out all the passed headers in series into the
 	// buffer we just extracted from the pool.
 	for _, header := range hdrs {
-		if _, err := headerBuf.Write(padEnd(header.FilterHash[:], int(HeaderSize))); err != nil {
+		if _, err := headerBuf.Write(header.FilterHash[:]); err != nil {
 			return err
 		}
 	}

@@ -29,7 +29,7 @@ func (h *headerStore) singleTruncate() error {
 	case Block:
 		truncateLength = HeaderSize
 	case RegularFilter:
-		truncateLength = HeaderSize
+		truncateLength = HeaderFilterSize
 	default:
 		return fmt.Errorf("unknown index type: %v", h.indexType)
 	}

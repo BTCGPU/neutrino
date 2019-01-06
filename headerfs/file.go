@@ -30,7 +30,7 @@ func (h *headerStore) readRaw(seekDist uint64) ([]byte, error) {
 		headerSize = HeaderSize
 
 	case RegularFilter:
-		headerSize = HeaderSize
+		headerSize = HeaderFilterSize
 
 	default:
 		return nil, fmt.Errorf("unknown index type: %v", h.indexType)
@@ -66,7 +66,7 @@ func (h *blockHeaderStore) readHeaderRange(startHeight uint32,
 		headerSize = HeaderSize
 
 	case RegularFilter:
-		headerSize = HeaderSize
+		headerSize = HeaderFilterSize
 
 	default:
 		return nil, fmt.Errorf("unknown index type: %v", h.indexType)
@@ -132,7 +132,7 @@ func (h *blockHeaderStore) readHeader(height uint32) (wire.BlockHeader, error) {
 // readHeader reads a single filter header at the specified height from the
 // flat files on disk.
 func (f *FilterHeaderStore) readHeader(height uint32) (*chainhash.Hash, error) {
-	seekDistance := uint64(height) * uint64(HeaderSize)
+	seekDistance := uint64(height) * uint64(HeaderFilterSize)
 
 	rawHeader, err := f.readRaw(seekDistance)
 	if err != nil {
