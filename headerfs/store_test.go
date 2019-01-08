@@ -12,10 +12,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/btcsuite/btcd/chaincfg"
-	"github.com/btcsuite/btcd/chaincfg/chainhash"
-	"github.com/btcsuite/btcd/wire"
-	"github.com/btcsuite/btcwallet/walletdb"
+	"github.com/btgsuite/btgd/chaincfg"
+	"github.com/btgsuite/btgd/chaincfg/chainhash"
+	"github.com/btgsuite/btgd/wire"
+	"github.com/btgsuite/btgwallet/walletdb"
 	"github.com/davecgh/go-spew/spew"
 )
 
@@ -51,9 +51,11 @@ func createTestBlockHeaderChain(numHeaders uint32) []BlockHeader {
 	for i := uint32(1); i <= numHeaders; i++ {
 		bitcoinHeader := &wire.BlockHeader{
 			Bits:      uint32(rand.Int31()),
-			Nonce:     uint32(rand.Int31()),
+			Nonce:     wire.Uint256FromUint32(uint32(rand.Int31())),
 			Timestamp: prevHeader.Timestamp.Add(time.Minute * 1),
 			PrevBlock: prevHeader.BlockHash(),
+			Solution:  make([]byte, 4),
+			Height:    i,
 		}
 
 		blockHeaders[i-1] = BlockHeader{

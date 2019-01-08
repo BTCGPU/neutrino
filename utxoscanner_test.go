@@ -7,11 +7,11 @@ import (
 	"testing"
 	"time"
 
-	"github.com/btcsuite/btcd/chaincfg/chainhash"
-	"github.com/btcsuite/btcd/wire"
-	"github.com/btcsuite/btcutil"
-	"github.com/btcsuite/btcutil/gcs"
-	"github.com/btcsuite/btcwallet/waddrmgr"
+	"github.com/btgsuite/btgd/chaincfg/chainhash"
+	"github.com/btgsuite/btgd/wire"
+	btcutil "github.com/btgsuite/btgutil"
+	"github.com/btgsuite/btgutil/gcs"
+	"github.com/btgsuite/btgwallet/waddrmgr"
 )
 
 type MockChainClient struct {
@@ -576,9 +576,9 @@ var Block99999 = wire.MsgBlock{
 			0x30, 0xf2, 0x3c, 0x5a, 0xed, 0xd6, 0x79, 0x49,
 			0xa3, 0xe1, 0xa8, 0x55, 0xf2, 0x9d, 0xe0, 0x11,
 		}), // 110ed92f558a1e3a94976ddea5c32f030670b5c58c3cc4d857ac14d7a1547a90
-		Timestamp: time.Unix(1293623731, 0), // 2010-12-29 11:55:31
-		Bits:      0x1b04864c,               // 453281356
-		Nonce:     0xe80388b2,               // 3892545714
+		Timestamp: time.Unix(1293623731, 0),           // 2010-12-29 11:55:31
+		Bits:      0x1b04864c,                         // 453281356
+		Nonce:     wire.Uint256FromUint32(0xe80388b2), // 3892545714
 	},
 	Transactions: []*wire.MsgTx{
 		{
@@ -636,9 +636,9 @@ var Block100000 = wire.MsgBlock{
 			0x28, 0xc3, 0x06, 0x7c, 0xc3, 0x8d, 0x48, 0x85,
 			0xef, 0xb5, 0xa4, 0xac, 0x42, 0x47, 0xe9, 0xf3,
 		}), // f3e94742aca4b5ef85488dc37c06c3282295ffec960994b2c0d5ac2a25a95766
-		Timestamp: time.Unix(1293623863, 0), // 2010-12-29 11:57:43 +0000 UTC
-		Bits:      0x1b04864c,               // 453281356
-		Nonce:     0x10572b0f,               // 274148111
+		Timestamp: time.Unix(1293623863, 0),           // 2010-12-29 11:57:43 +0000 UTC
+		Bits:      0x1b04864c,                         // 453281356
+		Nonce:     wire.Uint256FromUint32(0x10572b0f), // 274148111
 	},
 	Transactions: []*wire.MsgTx{
 		{
