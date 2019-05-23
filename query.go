@@ -8,6 +8,8 @@ import (
 	"sync/atomic"
 	"time"
 
+	"github.com/BTCGPU/neutrino/cache"
+	"github.com/BTCGPU/neutrino/filterdb"
 	"github.com/btgsuite/btgd/blockchain"
 	"github.com/btgsuite/btgd/chaincfg/chainhash"
 	"github.com/btgsuite/btgd/wire"
@@ -15,8 +17,6 @@ import (
 	"github.com/btgsuite/btgutil/gcs"
 	"github.com/btgsuite/btgutil/gcs/builder"
 	"github.com/davecgh/go-spew/spew"
-	"github.com/BTCGPU/neutrino/cache"
-	"github.com/BTCGPU/neutrino/filterdb"
 )
 
 var (
@@ -966,7 +966,7 @@ func (s *ChainService) GetBlock(blockHash chainhash.Hash,
 					// by the time we get here, it's been
 					// checked during header
 					// synchronization
-					s.chainParams.PowLimit,
+					&s.chainParams,
 					s.timeSource,
 				); err != nil {
 					log.Warnf("Invalid block for %s "+

@@ -3,6 +3,7 @@ module github.com/BTCGPU/neutrino
 go 1.12
 
 require (
+	github.com/btcsuite/btcd v0.0.0-20190523000118-16327141da8c // indirect
 	github.com/btcsuite/btclog v0.0.0-20170628155309-84c8d2346e9f
 	github.com/btgsuite/btgd v0.0.0-20190506031116-1acdb1161d4c
 	github.com/btgsuite/btgutil v0.0.0-20181120193620-526c8484e577
