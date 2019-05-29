@@ -8,5 +8,6 @@ require (
 	github.com/btgsuite/btgutil v0.0.0-20181120193620-526c8484e577
 	github.com/btgsuite/btgwallet v0.0.0-20190524073003-f40d33daab5a
 	github.com/davecgh/go-spew v1.1.1
+	github.com/lightningnetwork/lnd/queue v1.0.1
 	go.etcd.io/bbolt v1.3.2 // indirect
 )

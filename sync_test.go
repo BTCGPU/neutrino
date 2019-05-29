@@ -14,6 +14,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/BTCGPU/neutrino"
+	"github.com/btcsuite/btclog"
 	"github.com/btgsuite/btgd/btcec"
 	"github.com/btgsuite/btgd/btcjson"
 	"github.com/btgsuite/btgd/chaincfg"
@@ -22,14 +24,12 @@ import (
 	"github.com/btgsuite/btgd/rpcclient"
 	"github.com/btgsuite/btgd/txscript"
 	"github.com/btgsuite/btgd/wire"
-	"github.com/btcsuite/btclog"
 	btcutil "github.com/btgsuite/btgutil"
 	"github.com/btgsuite/btgutil/gcs/builder"
 	"github.com/btgsuite/btgwallet/waddrmgr"
 	"github.com/btgsuite/btgwallet/wallet/txauthor"
 	"github.com/btgsuite/btgwallet/walletdb"
 	_ "github.com/btgsuite/btgwallet/walletdb/bdb"
-	"github.com/BTCGPU/neutrino"
 )
 
 var (
@@ -185,7 +185,7 @@ var (
 	ourKnownTxsByFilteredBlock = make(map[chainhash.Hash][]*btcutil.Tx)
 )
 
-// secSource is an implementation of btcwallet/txauthor/SecretsSource that
+// secSource is an implementation of btgwallet/txauthor/SecretsSource that
 // stores WitnessPubKeyHash addresses.
 type secSource struct {
 	keys    map[string]*btcec.PrivateKey

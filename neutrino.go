@@ -12,6 +12,11 @@ import (
 	"sync/atomic"
 	"time"
 
+	"github.com/BTCGPU/neutrino/blockntfns"
+	"github.com/BTCGPU/neutrino/cache/lru"
+	"github.com/BTCGPU/neutrino/filterdb"
+	"github.com/BTCGPU/neutrino/headerfs"
+	"github.com/BTCGPU/neutrino/pushtx"
 	"github.com/btgsuite/btgd/addrmgr"
 	"github.com/btgsuite/btgd/blockchain"
 	"github.com/btgsuite/btgd/chaincfg"
@@ -22,11 +27,6 @@ import (
 	btcutil "github.com/btgsuite/btgutil"
 	"github.com/btgsuite/btgwallet/waddrmgr"
 	"github.com/btgsuite/btgwallet/walletdb"
-	"github.com/BTCGPU/neutrino/blockntfns"
-	"github.com/BTCGPU/neutrino/cache/lru"
-	"github.com/BTCGPU/neutrino/filterdb"
-	"github.com/BTCGPU/neutrino/headerfs"
-	"github.com/lightninglabs/neutrino/pushtx"
 )
 
 // These are exported variables so they can be changed by users.

@@ -10,6 +10,7 @@ import (
 
 	"github.com/BTCGPU/neutrino/cache"
 	"github.com/BTCGPU/neutrino/filterdb"
+	"github.com/BTCGPU/neutrino/pushtx"
 	"github.com/btgsuite/btgd/blockchain"
 	"github.com/btgsuite/btgd/chaincfg/chainhash"
 	"github.com/btgsuite/btgd/wire"
@@ -17,7 +18,6 @@ import (
 	"github.com/btgsuite/btgutil/gcs"
 	"github.com/btgsuite/btgutil/gcs/builder"
 	"github.com/davecgh/go-spew/spew"
-	"github.com/lightninglabs/neutrino/pushtx"
 )
 
 var (
