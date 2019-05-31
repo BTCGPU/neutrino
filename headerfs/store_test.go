@@ -453,7 +453,7 @@ func TestFilterHeaderStoreRecovery(t *testing.T) {
 // the ancestors of a particular block, going from a set distance back to the
 // target block.
 func TestBlockHeadersFetchHeaderAncestors(t *testing.T) {
-	t.Parallel()
+	//t.Parallel()
 
 	cleanUp, _, _, bhs, err := createTestBlockHeaderStore()
 	if cleanUp != nil {

@@ -60,7 +60,7 @@ const (
 
 const (
 	// BlockHeaderSize is the size in bytes of the Block header type.
-	BlockHeaderSize = 80
+	BlockHeaderSize = HeaderSize
 
 	// RegularFilterHeaderSize is the size in bytes of the RegularFilter
 	// header type.

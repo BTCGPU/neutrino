@@ -73,9 +73,13 @@ func (h *blockHeaderStore) readHeaderRange(startHeight uint32,
 	// our set of serialized contiguous raw headers.
 	numHeaders := endHeight - startHeight + 1
 	headers := make([]wire.BlockHeader, 0, numHeaders)
-	for h := uint32(0); h < numHeaders; h++ {
+	for headerReader.Len() != 0 {
 		var nextHeader wire.BlockHeader
-		header := rawHeaderBytes[h*headerSize : h*headerSize+headerSize]
+		header := make([]byte, BlockHeaderSize, BlockHeaderSize)
+		headerReader.Read(header)
+
+		// Pass new reader because of the padding, wire.Deserialize does not read it and
+		// it is left for the next header, resulting in wrong header
 		if err := nextHeader.Deserialize(bytes.NewReader(header)); err != nil {
 			return nil, err
 		}

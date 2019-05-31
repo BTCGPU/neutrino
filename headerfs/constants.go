@@ -1,7 +1,7 @@
 package headerfs
 
 // HeaderSize that represents maximum Bitcoin Gold block header
-var (
+const (
 	HeaderSize       uint32 = 1487
 	HeaderFilterSize uint32 = 32
 )

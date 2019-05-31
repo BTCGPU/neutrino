@@ -6,10 +6,10 @@ import (
 	"sync"
 	"time"
 
+	"github.com/BTCGPU/neutrino/blockntfns"
 	"github.com/btgsuite/btgd/chaincfg/chainhash"
 	"github.com/btgsuite/btgd/wire"
 	"github.com/btgsuite/btgwallet/wtxmgr"
-	"github.com/BTCGPU/neutrino/blockntfns"
 )
 
 var (
