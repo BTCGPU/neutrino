@@ -1,6 +1,7 @@
 cloud.google.com/go v0.26.0/go.mod h1:aQUYkXzVsufM+DwF1aE+0xfcU+56JwCaLick0ClmMTw=
 github.com/BTCGPU/neutrino v0.0.0-20190524044056-91bbb141e39a/go.mod h1:U3Ma995t6qoIexDGLPRY0xYIQjahPUIK0nxBxHwgv98=
 github.com/BTCGPU/neutrino v0.0.0-20190528183008-5b9e35cbd344/go.mod h1:3OZeRq0E0uVEnbphlRvPeilqxOWGF2HGC1AhqgyhQ3E=
+github.com/BTCGPU/neutrino v0.0.0-20190603171357-7fa5551147d0/go.mod h1:DohBW23y73Pk4NU5UUMv/vcq4wylOfz5yse2TFEj82s=
 github.com/BurntSushi/toml v0.3.1/go.mod h1:xHWCNGjB5oqiDr8zfno3MHue2Ht5sIBksp03qcyfWMU=
 github.com/aead/siphash v1.0.1 h1:FwHfE/T45KPKYuuSAKyyvE+oPWcaQ+CUmFW0bPlM+kg=
 github.com/aead/siphash v1.0.1/go.mod h1:Nywa3cDsYNNK3gaciGTWPwHt0wlpNV15vwmswBAUSII=
@@ -26,8 +27,9 @@ github.com/btgsuite/btgutil v0.0.0-20181120193620-526c8484e577 h1:b/xhtleN9Bka0R
 github.com/btgsuite/btgutil v0.0.0-20181120193620-526c8484e577/go.mod h1:ypvXVEkIHnbxtQVjlQzSDwpaIaLSDeZK3Cn8oUhocFs=
 github.com/btgsuite/btgwallet v0.0.0-20190523191120-e201b0760337/go.mod h1:aABPmlFboWxeJLXDb0ba4TxSKR9dposiIj39HIqxTSs=
 github.com/btgsuite/btgwallet v0.0.0-20190524073003-f40d33daab5a/go.mod h1:QbL66i+sq1cs4gUvFCzrgVk7l9t5qaV38G28HC0QVZc=
-github.com/btgsuite/btgwallet v0.0.0-20190531120221-07000f2be656 h1:SLv8UDC9fbxPnP1cO1qIeUNSDn7YdZy3wzVvFqI6d9Y=
 github.com/btgsuite/btgwallet v0.0.0-20190531120221-07000f2be656/go.mod h1:L7yvDqkZSUS6BbnU1WBImA3To0+bgkfVIMBuPWeNX4c=
+github.com/btgsuite/btgwallet v0.0.0-20190604153501-b0f13809ea8f h1:k+x0f05KoZiEpjlzSKh3HLcN4YL+2+ThqKOrk+EYZkg=
+github.com/btgsuite/btgwallet v0.0.0-20190604153501-b0f13809ea8f/go.mod h1:opEhJjGn+lPXV9Dytptko1EoWk0ZgadvER/iYSWJhig=
 github.com/client9/misspell v0.3.4/go.mod h1:qj6jICC3Q7zFZvVWo7KLAzC3yx5G7kyvSDkc90ppPyw=
 github.com/coreos/bbolt v1.3.2 h1:wZwiHHUieZCquLkDL0B8UhzreNWsPHooDAG3q34zk0s=
 github.com/coreos/bbolt v1.3.2/go.mod h1:iRUV2dpdMOn7Bo10OQBFzIJO9kkE559Wcmn+qkEiiKk=
@@ -76,8 +78,9 @@ golang.org/x/net v0.0.0-20180906233101-161cd47e91fd/go.mod h1:mL1N/T3taQHkDXs73r
 golang.org/x/net v0.0.0-20190311183353-d8887717615a/go.mod h1:t9HGtf8HONx5eT2rtn7q6eTqICYqUVnKs3thJo3Qplg=
 golang.org/x/net v0.0.0-20190404232315-eb5bcb51f2a3/go.mod h1:t9HGtf8HONx5eT2rtn7q6eTqICYqUVnKs3thJo3Qplg=
 golang.org/x/net v0.0.0-20190509222800-a4d6f7feada5/go.mod h1:t9HGtf8HONx5eT2rtn7q6eTqICYqUVnKs3thJo3Qplg=
-golang.org/x/net v0.0.0-20190522155817-f3200d17e092 h1:4QSRKanuywn15aTZvI/mIDEgPQpswuFndXpOj3rKEco=
 golang.org/x/net v0.0.0-20190522155817-f3200d17e092/go.mod h1:HSz+uSET+XFnRR8LxR5pz3Of3rY3CfYBVs4xY44aLks=
+golang.org/x/net v0.0.0-20190603091049-60506f45cf65 h1:+rhAzEzT3f4JtomfC371qB+0Ola2caSKcY69NUBZrRQ=
+golang.org/x/net v0.0.0-20190603091049-60506f45cf65/go.mod h1:HSz+uSET+XFnRR8LxR5pz3Of3rY3CfYBVs4xY44aLks=
 golang.org/x/oauth2 v0.0.0-20180821212333-d2e6202438be/go.mod h1:N/0e6XlmueqKjAGxoOufVs8QHGRruUQn6yWY3a++T0U=
 golang.org/x/sync v0.0.0-20180314180146-1d60e4601c6f/go.mod h1:RxMgew5VJxzue5/jJTE5uejpjVlOe/izrB70Jof72aM=
 golang.org/x/sys v0.0.0-20180909124046-d0be0721c37e/go.mod h1:STP8DvDyc/dI5b8T5hshtkjS+E42TnysNCUPdjciGhY=
