@@ -23,12 +23,16 @@ import (
 var (
 	// QueryTimeout specifies how long to wait for a peer to answer a
 	// query.
-	QueryTimeout = time.Second * 3
+	QueryTimeout = time.Second * 10
 
 	// QueryBatchTimout is the total time we'll wait for a batch fetch
 	// query to complete.
 	// TODO(halseth): instead use timeout since last received response?
 	QueryBatchTimeout = time.Second * 30
+
+	// QueryPeerCooldown is the time we'll wait before re-assigning a query
+	// to a peer that previously failed because of a timeout.
+	QueryPeerCooldown = time.Second * 5
 
 	// QueryNumRetries specifies how many times to retry sending a query to
 	// each peer before we've concluded we aren't going to get a valid
@@ -45,6 +49,20 @@ var (
 	// `getdata` and other similar messages.
 	QueryEncoding = wire.WitnessEncoding
 )
+
+// QueryAccess is an interface that gives acces to query a set of peers in
+// different ways.
+type QueryAccess interface {
+	queryAllPeers(
+		queryMsg wire.Message,
+		checkResponse func(sp *ServerPeer, resp wire.Message,
+			quit chan<- struct{}, peerQuit chan<- struct{}),
+		options ...QueryOption)
+}
+
+// A compile-time check to ensure that ChainService implements the
+// QueryAccess interface.
+var _ QueryAccess = (*ChainService)(nil)
 
 // queries are a set of options that can be modified per-query, unlike global
 // options.
@@ -284,8 +302,25 @@ func queryChainServiceBatch(
 	peerStates := make(map[string]wire.Message)
 	var mtxPeerStates sync.RWMutex
 
+	// allDone is a helper closure we'll use to determine whether we can
+	// exit due to all of our queries being answered.
+	allDone := func() bool {
+		for i := 0; i < len(queryStates); i++ {
+			if atomic.LoadUint32(&queryStates[i]) !=
+				uint32(queryAnswered) {
+				return false
+			}
+		}
+		return true
+	}
+
+	// allDoneSignal is a channel we'll close to signal to the main loop
+	// that all of the queries have been answered.
+	var allDoneOnce sync.Once
+	allDoneSignal := make(chan struct{})
+
 	peerGoroutine := func(sp *ServerPeer, quit <-chan struct{},
-		matchSignal <-chan struct{}) {
+		matchSignal <-chan struct{}, allDoneSignal chan struct{}) {
 
 		// Subscribe to messages from the peer.
 		sp.subscribeRecvMsg(subscription)
@@ -381,13 +416,16 @@ func queryChainServiceBatch(
 			mtxPeerStates.Lock()
 			peerStates[sp.Addr()] = queryMsgs[handleQuery]
 			mtxPeerStates.Unlock()
+
+			exiting := false
 			select {
 			case <-queryQuit:
-				return
+				exiting = true
 			case <-s.quit:
-				return
+				exiting = true
 			case <-quit:
-				return
+				exiting = true
+
 			case <-timeout:
 				// We failed, so set the query state back to
 				// zero and update our lastFailed state.
@@ -400,14 +438,52 @@ func queryChainServiceBatch(
 					newLogClosure(func() string {
 						return spew.Sdump(queryMsgs[handleQuery])
 					}))
-			case <-matchSignal:
+
+				// To allow other peers to pick up this query,
+				// let the peer that just timed out wait a
+				// cooldown period before handing it the next
+				// query.
+				select {
+				case <-time.After(QueryPeerCooldown):
+				case <-queryQuit:
+					return
+				case <-s.quit:
+					return
+				case <-quit:
+					return
+				}
+
+			case _, ok := <-matchSignal:
+				if !ok {
+					exiting = true
+					break
+				}
+
+				log.Tracef("Query #%v answered, updating state",
+					handleQuery)
+
 				// We got a match signal so we can mark this
 				// query a success.
 				atomic.StoreUint32(&queryStates[handleQuery],
 					uint32(queryAnswered))
 
-				log.Tracef("Query #%v answered, updating state",
-					handleQuery)
+				// If we're done answering all of our queries,
+				// we can exit now.
+				if allDone() {
+					allDoneOnce.Do(func() {
+						close(allDoneSignal)
+					})
+					return
+				}
+			}
+
+			// Before exiting the peer goroutine, reset the query
+			// state to ensure other peers can pick it up.
+			if exiting {
+				atomic.StoreUint32(
+					&queryStates[handleQuery], uint32(queryWaitSubmit),
+				)
+				return
 			}
 		}
 	}
@@ -439,6 +515,7 @@ func queryChainServiceBatch(
 				matchSignals[sp] = make(chan struct{})
 				go peerGoroutine(
 					peer, peerQuits[sp], matchSignals[sp],
+					allDoneSignal,
 				)
 			}
 
@@ -469,20 +546,10 @@ func queryChainServiceBatch(
 				}
 			}
 		case <-time.After(qo.timeout):
-			// Check if we're done; if so, quit.
-			allDone := true
-			for i := 0; i < len(queryStates); i++ {
-				if atomic.LoadUint32(&queryStates[i]) !=
-					uint32(queryAnswered) {
-					allDone = false
-				}
-			}
-			if allDone {
-				return
-			}
+		case <-allDoneSignal:
+			return
 		case <-queryQuit:
 			return
-
 		case <-s.quit:
 			return
 		}
@@ -1342,7 +1409,7 @@ func (s *ChainService) sendTransaction(tx *wire.MsgTx, options ...QueryOption) e
 	// error as the reliable broadcaster will take care of broadcasting this
 	// transaction upon every block connected/disconnected.
 	if numReplied == 0 {
-		log.Warnf("No peers replied to inv message for transaction %v",
+		log.Debugf("No peers replied to inv message for transaction %v",
 			tx.TxHash())
 		return nil
 	}
