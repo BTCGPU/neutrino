@@ -81,7 +81,7 @@ var headerBufPool = sync.Pool{
 type headerStore struct {
 	mtx sync.RWMutex
 
-	filePath string
+	fileName string
 
 	file *os.File
 
@@ -122,7 +122,7 @@ func newHeaderStore(db walletdb.DB, filePath string,
 	}
 
 	return &headerStore{
-		filePath:    filePath,
+		fileName:    flatFileName,
 		file:        headerFile,
 		headerIndex: index,
 	}, nil
@@ -600,7 +600,8 @@ type FilterHeaderStore struct {
 // FilterHeaderStore, then the initial genesis filter header will need to be
 // inserted.
 func NewFilterHeaderStore(filePath string, db walletdb.DB,
-	filterType HeaderType, netParams *chaincfg.Params) (*FilterHeaderStore, error) {
+	filterType HeaderType, netParams *chaincfg.Params,
+	headerStateAssertion *FilterHeader) (*FilterHeaderStore, error) {
 
 	fStore, err := newHeaderStore(db, filePath, filterType)
 	if err != nil {
@@ -659,6 +660,25 @@ func NewFilterHeaderStore(filePath string, db walletdb.DB,
 		return fhs, nil
 	}
 
+	// If we have a state assertion then we'll check it now to see if we
+	// need to modify our filter header files before we proceed.
+	if headerStateAssertion != nil {
+		reset, err := fhs.maybeResetHeaderState(
+			headerStateAssertion,
+		)
+		if err != nil {
+			return nil, err
+		}
+
+		// If the filter header store was reset, we'll re-initialize it
+		// to recreate our on-disk state.
+		if reset {
+			return NewFilterHeaderStore(
+				filePath, db, filterType, netParams, nil,
+			)
+		}
+	}
+
 	// As a final initialization step, we'll ensure that the header tip
 	// within the flat files, is in sync with out database index.
 	tipHash, tipHeight, err := fhs.chainTip()
@@ -695,6 +715,42 @@ func NewFilterHeaderStore(filePath string, db walletdb.DB,
 	// TODO(roasbeef): make above into func
 
 	return fhs, nil
+}
+
+// maybeResetHeaderState will reset the header state if the header assertion
+// fails, but only if the target height is found. The boolean returned indicates
+// that header state was reset.
+func (f *FilterHeaderStore) maybeResetHeaderState(
+	headerStateAssertion *FilterHeader) (bool, error) {
+
+	// First, we'll attempt to locate the header at this height. If no such
+	// header is found, then we'll exit early.
+	assertedHeader, err := f.FetchHeaderByHeight(
+		headerStateAssertion.Height,
+	)
+	if _, ok := err.(*ErrHeaderNotFound); ok {
+		return false, nil
+	}
+	if err != nil {
+		return false, err
+	}
+
+	// If our on disk state and the provided header assertion don't match,
+	// then we'll purge this state so we can sync it anew once we fully
+	// start up.
+	if *assertedHeader != headerStateAssertion.FilterHash {
+		// Close the file before removing it. This is required by some
+		// OS, e.g., Windows.
+		if err := f.file.Close(); err != nil {
+			return true, err
+		}
+		if err := os.Remove(f.fileName); err != nil {
+			return true, err
+		}
+		return true, nil
+	}
+
+	return false, nil
 }
 
 // FetchHeader returns the filter header that corresponds to the passed block

@@ -3,11 +3,11 @@ cache:
   directories:
     - $GOCACHE
     - $GOPATH/pkg/mod
-    - $GOPATH/src/github.com/btcsuite
+    - $GOPATH/src/github.com/btgsuite
     - $GOPATH/src/github.com/golang
     - $GOPATH/src/gopkg.in/alecthomas
 go:
-  - "1.11.x"
+  - "1.12.x"
 sudo: false
 install:
   - export PATH=$PATH:$PWD/linux-amd64/
