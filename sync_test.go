@@ -24,7 +24,7 @@ import (
 	"github.com/btgsuite/btgd/rpcclient"
 	"github.com/btgsuite/btgd/txscript"
 	"github.com/btgsuite/btgd/wire"
-	"github.com/lightninglabs/neutrino/banman"
+	"github.com/BTCGPU/neutrino/banman"
 	btcutil "github.com/btgsuite/btgutil"
 	"github.com/btgsuite/btgutil/gcs/builder"
 	"github.com/btgsuite/btgwallet/waddrmgr"

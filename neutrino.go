@@ -23,7 +23,7 @@ import (
 	"github.com/btgsuite/btgd/chaincfg/chainhash"
 	"github.com/btgsuite/btgd/connmgr"
 	"github.com/btgsuite/btgd/peer"
-	"github.com/lightninglabs/neutrino/banman"
+	"github.com/BTCGPU/neutrino/banman"
 	"github.com/btgsuite/btgd/wire"
 	btcutil "github.com/btgsuite/btgutil"
 	"github.com/btgsuite/btgwallet/waddrmgr"

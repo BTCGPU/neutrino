@@ -12,6 +12,11 @@ import (
 	"sync/atomic"
 	"time"
 
+	"github.com/BTCGPU/neutrino/banman"
+	"github.com/BTCGPU/neutrino/blockntfns"
+	"github.com/BTCGPU/neutrino/chainsync"
+	"github.com/BTCGPU/neutrino/headerfs"
+	"github.com/BTCGPU/neutrino/headerlist"
 	"github.com/btgsuite/btgd/blockchain"
 	"github.com/btgsuite/btgd/chaincfg"
 	"github.com/btgsuite/btgd/chaincfg/chainhash"
@@ -20,11 +25,6 @@ import (
 	btcutil "github.com/btgsuite/btgutil"
 	"github.com/btgsuite/btgutil/gcs"
 	"github.com/btgsuite/btgutil/gcs/builder"
-	"github.com/BTCGPU/neutrino/headerfs"
-	"github.com/lightninglabs/neutrino/banman"
-	"github.com/BTCGPU/neutrino/blockntfns"
-	"github.com/BTCGPU/neutrino/chainsync"
-	"github.com/BTCGPU/neutrino/headerlist"
 )
 
 const (
