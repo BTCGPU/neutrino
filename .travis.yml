@@ -12,10 +12,10 @@ sudo: false
 install:
   - export PATH=$PATH:$PWD/linux-amd64/
   - mkdir -p $GOPATH/src/github.com/btcsuite/
-  - "[ -d $GOPATH/src/github.com/btcsuite/btcd ] || git clone https://github.com/btcsuite/btcd.git $GOPATH/src/github.com/btcsuite/btcd"
-  - pushd $GOPATH/src/github.com/btcsuite/btcd
+  - "[ -d $GOPATH/src/github.com/btgsuite/btgd ] || git clone https://github.com/btgsuite/btgd.git $GOPATH/src/github.com/btgsuite/btgd"
+  - pushd $GOPATH/src/github.com/btgsuite/btgd
   - git checkout .
-  - $GOPATH/src/github.com/lightninglabs/neutrino/btcd_checkout.sh
+  - $GOPATH/src/github.com/BTCGPU/neutrino/btcd_checkout.sh
   - go install . ./cmd/...
   - popd
 env:

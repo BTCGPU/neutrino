@@ -3,10 +3,10 @@ package neutrino
 import (
 	"github.com/BTCGPU/neutrino/blockntfns"
 	"github.com/BTCGPU/neutrino/pushtx"
-	"github.com/btcsuite/btcd/connmgr"
 	"github.com/btcsuite/btclog"
 	"github.com/btgsuite/btgd/addrmgr"
 	"github.com/btgsuite/btgd/blockchain"
+	"github.com/btgsuite/btgd/connmgr"
 	"github.com/btgsuite/btgd/peer"
 	"github.com/btgsuite/btgd/txscript"
 )

@@ -6,9 +6,9 @@ import (
 	"sync/atomic"
 	"time"
 
+	"github.com/BTCGPU/neutrino/headerfs"
 	"github.com/btgsuite/btgd/chaincfg/chainhash"
 	btcutil "github.com/btgsuite/btgutil"
-	"github.com/lightninglabs/neutrino/headerfs"
 )
 
 // getUtxoResult is a simple pair type holding a spend report and error.

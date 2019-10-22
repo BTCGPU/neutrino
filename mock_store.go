@@ -6,7 +6,7 @@ import (
 	"github.com/BTCGPU/neutrino/headerfs"
 	"github.com/btgsuite/btgd/blockchain"
 	"github.com/btgsuite/btgd/chaincfg/chainhash"
-	"github.com/btgsuite/btgwallet/waddrmgr"
+	"github.com/btgsuite/btgd/wire"
 )
 
 // mockBlockHeaderStore is an implementation of the BlockHeaderStore backed by

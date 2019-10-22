@@ -19,8 +19,8 @@ import (
 	"github.com/btgsuite/btgd/txscript"
 	"github.com/btgsuite/btgd/wire"
 	btcutil "github.com/btgsuite/btgutil"
+	"github.com/btgsuite/btgutil/gcs"
 	"github.com/btgsuite/btgutil/gcs/builder"
-	"github.com/btgsuite/btgwallet/waddrmgr"
 )
 
 var (

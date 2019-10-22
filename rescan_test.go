@@ -9,16 +9,16 @@ import (
 	"testing"
 	"time"
 
-	"github.com/btcsuite/btcd/chaincfg"
-	"github.com/btcsuite/btcd/chaincfg/chainhash"
-	"github.com/btcsuite/btcd/rpcclient"
-	"github.com/btcsuite/btcd/wire"
-	"github.com/btcsuite/btcutil"
-	"github.com/btcsuite/btcutil/gcs"
-	"github.com/btcsuite/btcutil/gcs/builder"
+	"github.com/BTCGPU/neutrino/blockntfns"
+	"github.com/BTCGPU/neutrino/headerfs"
+	"github.com/btgsuite/btgd/chaincfg"
+	"github.com/btgsuite/btgd/chaincfg/chainhash"
+	"github.com/btgsuite/btgd/rpcclient"
+	"github.com/btgsuite/btgd/wire"
+	btcutil "github.com/btgsuite/btgutil"
+	"github.com/btgsuite/btgutil/gcs"
+	"github.com/btgsuite/btgutil/gcs/builder"
 	"github.com/davecgh/go-spew/spew"
-	"github.com/lightninglabs/neutrino/blockntfns"
-	"github.com/lightninglabs/neutrino/headerfs"
 )
 
 // mockChainSource is a mock implementation of the ChainSource interface that

@@ -12,6 +12,7 @@ import (
 	"sync/atomic"
 	"time"
 
+	"github.com/BTCGPU/neutrino/banman"
 	"github.com/BTCGPU/neutrino/blockntfns"
 	"github.com/BTCGPU/neutrino/cache/lru"
 	"github.com/BTCGPU/neutrino/filterdb"
@@ -20,12 +21,11 @@ import (
 	"github.com/btgsuite/btgd/addrmgr"
 	"github.com/btgsuite/btgd/blockchain"
 	"github.com/btgsuite/btgd/chaincfg"
+	"github.com/btgsuite/btgd/chaincfg/chainhash"
 	"github.com/btgsuite/btgd/connmgr"
 	"github.com/btgsuite/btgd/peer"
-	"github.com/BTCGPU/neutrino/banman"
 	"github.com/btgsuite/btgd/wire"
 	btcutil "github.com/btgsuite/btgutil"
-	"github.com/btgsuite/btgwallet/waddrmgr"
 	"github.com/btgsuite/btgwallet/walletdb"
 )
 
