@@ -43,6 +43,10 @@ const (
 	// retryTimeout is the time we'll wait between failed queries to fetch
 	// filter checkpoints and headers.
 	retryTimeout = 3 * time.Second
+
+	// maxCFCheckptsPerQuery is the maximum number of filter header
+	// checkpoints we can query for within a single message over the wire.
+	maxCFCheckptsPerQuery = wire.MaxCFHeadersPerMsg / wire.CFCheckptInterval
 )
 
 // filterStoreLookup
@@ -744,10 +748,6 @@ func (b *blockManager) getUncheckpointedCFHeaders(
 			if err != nil {
 				log.Errorf("Unable to ban peer %v: %v", peer, err)
 			}
-			sp := b.server.PeerByAddr(peer)
-			if sp != nil {
-				sp.Disconnect()
-			}
 			delete(headers, peer)
 		}
 	}
@@ -780,10 +780,6 @@ func (b *blockManager) getUncheckpointedCFHeaders(
 				if err != nil {
 					log.Errorf("Unable to ban peer %v: %v",
 						peer, err)
-				}
-				sp := b.server.PeerByAddr(peer)
-				if sp != nil {
-					sp.Disconnect()
 				}
 				delete(headers, peer)
 			}
@@ -838,12 +834,20 @@ func (b *blockManager) getCheckpointedCFHeaders(checkpoints []*chainhash.Hash,
 	log.Infof("Starting to query for cfheaders from "+
 		"checkpoint_interval=%v", startingInterval)
 
-	queryMsgs := make([]wire.Message, 0, len(checkpoints))
+	// We'll determine how many queries we'll make based on our starting
+	// interval and our set of checkpoints. Each query will attempt to fetch
+	// maxCFCheckptsPerQuery intervals worth of filter headers. If
+	// maxCFCheckptsPerQuery is not a factor of the number of checkpoint
+	// intervals to fetch, then an additional query will exist that spans
+	// the remaining checkpoint intervals.
+	numCheckpts := uint32(len(checkpoints)) - startingInterval
+	numQueries := (numCheckpts + maxCFCheckptsPerQuery - 1) / maxCFCheckptsPerQuery
+	queryMsgs := make([]wire.Message, 0, numQueries)
 
 	// We'll also create an additional set of maps that we'll use to
 	// re-order the responses as we get them in.
-	queryResponses := make(map[uint32]*wire.MsgCFHeaders)
-	stopHashes := make(map[chainhash.Hash]uint32)
+	queryResponses := make(map[uint32]*wire.MsgCFHeaders, numQueries)
+	stopHashes := make(map[chainhash.Hash]uint32, numQueries)
 
 	// Generate all of the requests we'll be batching and space to store
 	// the responses. Also make a map of stophash to index to make it
@@ -854,13 +858,19 @@ func (b *blockManager) getCheckpointedCFHeaders(checkpoints []*chainhash.Hash,
 	for currentInterval < uint32(len(checkpoints)) {
 		// Each checkpoint is spaced wire.CFCheckptInterval after the
 		// prior one, so we'll fetch headers in batches using the
-		// checkpoints as a guide.
+		// checkpoints as a guide. Our queries will consist of
+		// maxCFCheckptsPerQuery unless we don't have enough checkpoints
+		// to do so. In that case, our query will consist of whatever is
+		// left.
 		startHeightRange := uint32(
 			currentInterval*wire.CFCheckptInterval,
 		) + 1
-		endHeightRange := uint32(
-			(currentInterval + 1) * wire.CFCheckptInterval,
-		)
+
+		nextInterval := currentInterval + maxCFCheckptsPerQuery
+		if nextInterval > uint32(len(checkpoints)) {
+			nextInterval = uint32(len(checkpoints))
+		}
+		endHeightRange := uint32(nextInterval * wire.CFCheckptInterval)
 
 		log.Tracef("Checkpointed cfheaders request start_range=%v, "+
 			"end_range=%v", startHeightRange, endHeightRange)
@@ -883,13 +893,13 @@ func (b *blockManager) getCheckpointedCFHeaders(checkpoints []*chainhash.Hash,
 		)
 
 		// We'll mark that the ith interval is queried by this message,
-		// and also map the top hash back to the index of this message.
+		// and also map the stop hash back to the index of this message.
 		queryMsgs = append(queryMsgs, queryMsg)
 		stopHashes[stopHash] = currentInterval
 
-		// With the queries for this interval constructed, we'll move
-		// onto the next one.
-		currentInterval++
+		// With the query starting at the current interval constructed,
+		// we'll move onto the next one.
+		currentInterval = nextInterval
 	}
 
 	batchesCount := len(queryMsgs)
@@ -944,9 +954,16 @@ func (b *blockManager) getCheckpointedCFHeaders(checkpoints []*chainhash.Hash,
 			prevCheckpoint := &b.genesisHeader
 			if checkPointIndex > 0 {
 				prevCheckpoint = checkpoints[checkPointIndex-1]
-
 			}
-			nextCheckpoint := checkpoints[checkPointIndex]
+
+			// The index of the next checkpoint will depend on
+			// whether the query was able to allocate
+			// maxCFCheckptsPerQuery.
+			nextCheckPointIndex := checkPointIndex + maxCFCheckptsPerQuery - 1
+			if nextCheckPointIndex >= uint32(len(checkpoints)) {
+				nextCheckPointIndex = uint32(len(checkpoints)) - 1
+			}
+			nextCheckpoint := checkpoints[nextCheckPointIndex]
 
 			// The response doesn't match the checkpoint.
 			if !verifyCheckpoint(prevCheckpoint, nextCheckpoint, r) {
@@ -967,8 +984,6 @@ func (b *blockManager) getCheckpointedCFHeaders(checkpoints []*chainhash.Hash,
 						peerAddr, err)
 				}
 
-				sp.Disconnect()
-
 				return false
 			}
 
@@ -984,7 +999,7 @@ func (b *blockManager) getCheckpointedCFHeaders(checkpoints []*chainhash.Hash,
 			// Find the first and last height for the blocks
 			// represented by this message.
 			startHeight := checkPointIndex*wire.CFCheckptInterval + 1
-			lastHeight := (checkPointIndex + 1) * wire.CFCheckptInterval
+			lastHeight := (nextCheckPointIndex + 1) * wire.CFCheckptInterval
 
 			log.Debugf("Got cfheaders from height=%v to "+
 				"height=%v, prev_hash=%v", startHeight,
@@ -1040,7 +1055,12 @@ func (b *blockManager) getCheckpointedCFHeaders(checkpoints []*chainhash.Hash,
 			// Then, we cycle through any cached messages, adding
 			// them to the batch and deleting them from the cache.
 			for {
-				checkPointIndex++
+				// Determine the next checkpoint index we should
+				// process.
+				checkPointIndex += maxCFCheckptsPerQuery
+				if checkPointIndex == uint32(len(checkpoints)) {
+					checkPointIndex = uint32(len(checkpoints)) - 1
+				}
 
 				// We'll also update the current height of the
 				// last written set of cfheaders.
@@ -1104,7 +1124,7 @@ func (b *blockManager) writeCFHeadersMsg(msg *wire.MsgCFHeaders,
 	// Cycle through the headers and compute each header based on the prev
 	// header and the filter hash from the cfheaders response entries.
 	lastHeader := msg.PrevFilterHeader
-	headerBatch := make([]headerfs.FilterHeader, 0, wire.CFCheckptInterval)
+	headerBatch := make([]headerfs.FilterHeader, 0, len(msg.FilterHashes))
 	for _, hash := range msg.FilterHashes {
 		// header = dsha256(filterHash || prevHeader)
 		lastHeader = chainhash.DoubleHashH(
@@ -1245,7 +1265,8 @@ func (b *blockManager) resolveConflict(
 				}
 				delete(checkpoints, peer)
 				break
-			} else if err != nil {
+			}
+			if err != nil {
 				return nil, err
 			}
 		}
@@ -1329,10 +1350,6 @@ func (b *blockManager) resolveConflict(
 					log.Errorf("Unable to ban peer %v: %v",
 						peer, err)
 				}
-				sp := b.server.PeerByAddr(peer)
-				if sp != nil {
-					sp.Disconnect()
-				}
 				delete(headers, peer)
 				delete(checkpoints, peer)
 			}
@@ -1350,10 +1367,6 @@ func (b *blockManager) resolveConflict(
 			if err != nil {
 				log.Errorf("Unable to ban peer %v: %v", peer,
 					err)
-			}
-			sp := b.server.PeerByAddr(peer)
-			if sp != nil {
-				sp.Disconnect()
 			}
 			delete(checkpoints, peer)
 		}

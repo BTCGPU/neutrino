@@ -20,7 +20,6 @@ import (
 	"github.com/btgsuite/btgd/addrmgr"
 	"github.com/btgsuite/btgd/blockchain"
 	"github.com/btgsuite/btgd/chaincfg"
-	"github.com/btgsuite/btgd/chaincfg/chainhash"
 	"github.com/btgsuite/btgd/connmgr"
 	"github.com/btgsuite/btgd/peer"
 	"github.com/BTCGPU/neutrino/banman"
@@ -238,8 +237,6 @@ func (sp *ServerPeer) addBanScore(persistent, transient uint32, reason string) {
 				log.Errorf("Unable to ban peer %v: %v",
 					peerAddr, err)
 			}
-
-			sp.Disconnect()
 		}
 	}
 }
@@ -282,9 +279,9 @@ func (sp *ServerPeer) OnVersion(_ *peer.Peer, msg *wire.MsgVersion) *wire.MsgRej
 			log.Errorf("Unable to ban peer %v: %v", peerAddr, err)
 		}
 
-		if sp.connReq != nil {
-			sp.server.connManager.Remove(sp.connReq.ID())
-		}
+		// Disconnect the peer even though BanPeer attempts to do so
+		// because it has yet to be added.
+		sp.Disconnect()
 
 		return nil
 	}
@@ -735,6 +732,12 @@ func NewChainService(cfg Config) (*ChainService, error) {
 			}
 
 			for tries := 0; tries < 100; tries++ {
+				select {
+				case <-s.quit:
+					return nil, ErrShuttingDown
+				default:
+				}
+
 				addr := s.addrManager.GetAddress()
 				if addr == nil {
 					break
@@ -782,6 +785,8 @@ func NewChainService(cfg Config) (*ChainService, error) {
 					continue
 				}
 
+				// Mark an attempt for the valid address.
+				s.addrManager.Attempt(addr.NetAddress())
 				return s.addrStringToNetAddr(addrString)
 			}
 
@@ -859,7 +864,7 @@ func NewChainService(cfg Config) (*ChainService, error) {
 
 // BestBlock retrieves the most recent block's height and hash where we
 // have both the header and filter header ready.
-func (s *ChainService) BestBlock() (*waddrmgr.BlockStamp, error) {
+func (s *ChainService) BestBlock() (*headerfs.BlockStamp, error) {
 	bestHeader, bestHeight, err := s.BlockHeaders.ChainTip()
 	if err != nil {
 		return nil, err
@@ -882,7 +887,7 @@ func (s *ChainService) BestBlock() (*waddrmgr.BlockStamp, error) {
 		}
 	}
 
-	return &waddrmgr.BlockStamp{
+	return &headerfs.BlockStamp{
 		Height: int32(bestHeight),
 		Hash:   bestHeader.BlockHash(),
 	}, nil
@@ -916,10 +921,25 @@ func (s *ChainService) GetBlockHeight(hash *chainhash.Hash) (int32, error) {
 	return int32(height), nil
 }
 
-// BanPeer bans a peer due to a specific reason for a duration of BanDuration.
+// BanPeer disconnects and bans a peer due to a specific reason for a duration
+// of BanDuration.
 func (s *ChainService) BanPeer(addr string, reason banman.Reason) error {
 	log.Warnf("Banning peer %v: duration=%v, reason=%v", addr, BanDuration,
 		reason)
+
+	// We'll want to disconnect the peer after we return regardless of
+	// whether we ban the peer or not. We do this to prevent a possible race
+	// condition where we end up reconnecting with the peer slightly
+	// before the ban succeeds.
+	defer func() {
+		// We do so in a goroutine to prevent blocking if the server is
+		// handling a query or a new/stale peer.
+		go func() {
+			if sp := s.PeerByAddr(addr); sp != nil {
+				sp.Disconnect()
+			}
+		}()
+	}()
 
 	ipNet, err := banman.ParseIPNet(addr, nil)
 	if err != nil {
@@ -983,12 +1003,12 @@ func (s *ChainService) NetTotals() (uint64, uint64) {
 
 // rollBackToHeight rolls back all blocks until it hits the specified height.
 // It sends notifications along the way.
-func (s *ChainService) rollBackToHeight(height uint32) (*waddrmgr.BlockStamp, error) {
+func (s *ChainService) rollBackToHeight(height uint32) (*headerfs.BlockStamp, error) {
 	header, headerHeight, err := s.BlockHeaders.ChainTip()
 	if err != nil {
 		return nil, err
 	}
-	bs := &waddrmgr.BlockStamp{
+	bs := &headerfs.BlockStamp{
 		Height: int32(headerHeight),
 		Hash:   header.BlockHash(),
 	}
@@ -999,7 +1019,7 @@ func (s *ChainService) rollBackToHeight(height uint32) (*waddrmgr.BlockStamp, er
 	}
 
 	for uint32(bs.Height) > height {
-		header, _, err := s.BlockHeaders.FetchHeader(&bs.Hash)
+		header, headerHeight, err := s.BlockHeaders.FetchHeader(&bs.Hash)
 		if err != nil {
 			return nil, err
 		}
@@ -1053,10 +1073,7 @@ func (s *ChainService) peerHandler() {
 			s.nameResolver, func(addrs []*wire.NetAddress) {
 				var validAddrs []*wire.NetAddress
 				for _, addr := range addrs {
-					if addr.Services&RequiredServices !=
-						RequiredServices {
-						continue
-					}
+					addr.Services = RequiredServices
 
 					validAddrs = append(validAddrs, addr)
 				}
@@ -1234,6 +1251,12 @@ func (s *ChainService) handleAddPeerMsg(state *peerState, sp *ServerPeer) bool {
 		s.firstPeerConnect = nil
 	}
 
+	// Update the address' last seen time if the peer has acknowledged our
+	// version and has sent us its version as well.
+	if sp.VerAckReceived() && sp.VersionKnown() && sp.NA() != nil {
+		s.addrManager.Connected(sp.NA())
+	}
+
 	return true
 }
 
@@ -1251,28 +1274,22 @@ func (s *ChainService) handleDonePeerMsg(state *peerState, sp *ServerPeer) {
 			state.outboundGroups[addrmgr.GroupKey(sp.NA())]--
 		}
 		if !sp.Inbound() && sp.connReq != nil {
-			s.connManager.Disconnect(sp.connReq.ID())
+			if sp.persistent {
+				s.connManager.Disconnect(sp.connReq.ID())
+			} else {
+				s.connManager.Remove(sp.connReq.ID())
+				go s.connManager.NewConnReq()
+			}
 		}
 		delete(list, sp.ID())
 		log.Debugf("Removed peer %s", sp)
 		return
 	}
 
+	// We'll always remove peers that are not persistent.
 	if sp.connReq != nil {
-		// If the peer has been banned, we'll remove the connection
-		// request from the manager to ensure we don't reconnect again.
-		// Otherwise, we'll just simply disconnect.
-		if s.IsBanned(sp.connReq.Addr.String()) {
-			s.connManager.Remove(sp.connReq.ID())
-		} else {
-			s.connManager.Disconnect(sp.connReq.ID())
-		}
-	}
-
-	// Update the address' last seen time if the peer has acknowledged
-	// our version and has sent us its version as well.
-	if sp.VerAckReceived() && sp.VersionKnown() && sp.NA() != nil {
-		s.addrManager.Connected(sp.NA())
+		s.connManager.Remove(sp.connReq.ID())
+		go s.connManager.NewConnReq()
 	}
 
 	// If we get here it means that either we didn't know about the peer
@@ -1352,18 +1369,34 @@ func newPeerConfig(sp *ServerPeer) *peer.Config {
 // request instance and the connection itself, and finally notifies the address
 // manager of the attempt.
 func (s *ChainService) outboundPeerConnected(c *connmgr.ConnReq, conn net.Conn) {
+	// In the event that we have to disconnect the peer, we'll choose the
+	// appropriate method to do so based on whether the connection request
+	// is for a persistent peer or not.
+	var disconnect func()
+	if c.Permanent {
+		disconnect = func() {
+			s.connManager.Disconnect(c.ID())
+		}
+	} else {
+		disconnect = func() {
+			// Since we're completely removing the request for this
+			// peer, we'll need to request a new one.
+			s.connManager.Remove(c.ID())
+			go s.connManager.NewConnReq()
+		}
+	}
+
 	// If the peer is banned, then we'll disconnect them.
 	peerAddr := c.Addr.String()
 	if s.IsBanned(peerAddr) {
-		// Remove will end up closing the connection.
-		s.connManager.Remove(c.ID())
+		disconnect()
 		return
 	}
 
 	// If we're already connected to this peer, then we'll close out the new
 	// connection and keep the old.
 	if s.PeerByAddr(peerAddr) != nil {
-		conn.Close()
+		disconnect()
 		return
 	}
 
@@ -1371,13 +1404,13 @@ func (s *ChainService) outboundPeerConnected(c *connmgr.ConnReq, conn net.Conn) 
 	p, err := peer.NewOutboundPeer(newPeerConfig(sp), peerAddr)
 	if err != nil {
 		log.Debugf("Cannot create outbound peer %s: %s", c.Addr, err)
-		s.connManager.Disconnect(c.ID())
+		disconnect()
+		return
 	}
 	sp.Peer = p
 	sp.connReq = c
 	sp.AssociateConnection(conn)
 	go s.peerDoneHandler(sp)
-	s.addrManager.Attempt(sp.NA())
 }
 
 // peerDoneHandler handles peer disconnects by notifiying the server that it's
