@@ -48,6 +48,10 @@ var (
 	// QueryEncoding specifies the default encoding (witness or not) for
 	// `getdata` and other similar messages.
 	QueryEncoding = wire.WitnessEncoding
+
+	// ErrFilterFetchFailed is returned in case fetching a compact filter
+	// fails.
+	ErrFilterFetchFailed = fmt.Errorf("unable to fetch cfilter")
 )
 
 // QueryAccess is an interface that gives acces to query a set of peers in
@@ -1210,7 +1214,7 @@ func (s *ChainService) GetCFilter(blockHash chainhash.Hash,
 		defer close(query.filterChan)
 
 		s.queryPeers(
-			// Send a wire.MsgGetCFilters
+			// Send a wire.MsgGetCFilters.
 			query.queryMsg(),
 
 			// Check responses and if we get one that matches, end
@@ -1224,29 +1228,40 @@ func (s *ChainService) GetCFilter(blockHash chainhash.Hash,
 		// If there are elements left to receive, the query failed.
 		if len(query.headerIndex) > 0 {
 			numFilters := query.stopHeight - query.startHeight + 1
+			numRecv := numFilters - int64(len(query.headerIndex))
 			log.Errorf("Query failed with %d out of %d filters "+
-				"received", len(query.headerIndex), numFilters)
+				"received", numRecv, numFilters)
 			return
 		}
 	}()
 
 	var ok bool
-	select {
+	var resultFilter *gcs.Filter
 
-	// We'll return immediately to the caller when the filter arrives.
-	case filter, ok = <-query.filterChan:
-		if !ok {
-			// TODO(halseth): return error?
-			return nil, nil
+	// We will wait for the query to finish before we return the requested
+	// filter to the caller.
+	for {
+		select {
+
+		case filter, ok = <-query.filterChan:
+			if !ok {
+				// Query has finished, if we have a result we'll
+				// return it.
+				if resultFilter == nil {
+					return nil, ErrFilterFetchFailed
+				}
+
+				return resultFilter, nil
+			}
+
+			// We'll store the filter so we can return it later to
+			// the caller.
+			resultFilter = filter
+
+		case <-s.quit:
+			return nil, ErrShuttingDown
 		}
-
-		return filter, nil
-
-	case <-s.quit:
-		// TODO(halseth): return error?
-		return nil, nil
 	}
-
 }
 
 // GetBlock gets a block by requesting it from the network, one peer at a

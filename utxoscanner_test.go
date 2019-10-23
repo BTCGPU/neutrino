@@ -7,11 +7,11 @@ import (
 	"testing"
 	"time"
 
+	"github.com/BTCGPU/neutrino/headerfs"
 	"github.com/btgsuite/btgd/chaincfg/chainhash"
 	"github.com/btgsuite/btgd/wire"
 	btcutil "github.com/btgsuite/btgutil"
 	"github.com/btgsuite/btgutil/gcs"
-	"github.com/btgsuite/btgwallet/waddrmgr"
 )
 
 type MockChainClient struct {
@@ -52,8 +52,8 @@ func (c *MockChainClient) SetBestSnapshot(hash *chainhash.Hash, height int32) {
 	c.getBestBlockHeight = height
 }
 
-func (c *MockChainClient) BestSnapshot() (*waddrmgr.BlockStamp, error) {
-	return &waddrmgr.BlockStamp{
+func (c *MockChainClient) BestSnapshot() (*headerfs.BlockStamp, error) {
+	return &headerfs.BlockStamp{
 		Hash:   *c.getBestBlockHash,
 		Height: c.getBestBlockHeight,
 	}, nil
@@ -382,7 +382,7 @@ func TestUtxoScannerScanAddBlocks(t *testing.T) {
 	scanner := NewUtxoScanner(&UtxoScannerConfig{
 		GetBlock:     mockChainClient.GetBlockFromNetwork,
 		GetBlockHash: mockChainClient.GetBlockHash,
-		BestSnapshot: func() (*waddrmgr.BlockStamp, error) {
+		BestSnapshot: func() (*headerfs.BlockStamp, error) {
 			<-waitForSnapshot
 			snapshotLock.Lock()
 			defer snapshotLock.Unlock()

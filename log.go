@@ -6,6 +6,7 @@ import (
 	"github.com/btcsuite/btclog"
 	"github.com/btgsuite/btgd/addrmgr"
 	"github.com/btgsuite/btgd/blockchain"
+	"github.com/btgsuite/btgd/connmgr"
 	"github.com/btgsuite/btgd/peer"
 	"github.com/btgsuite/btgd/txscript"
 )
@@ -37,6 +38,7 @@ func UseLogger(logger btclog.Logger) {
 	addrmgr.UseLogger(logger)
 	blockntfns.UseLogger(logger)
 	pushtx.UseLogger(logger)
+	connmgr.UseLogger(logger)
 }
 
 // logClosure is used to provide a closure over expensive logging operations so
