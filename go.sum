@@ -25,6 +25,8 @@ github.com/btgsuite/btgwallet/wallet/txsizes v1.0.0 h1:iNMmefjzjaE/lFNTr0IPvHoLs
 github.com/btgsuite/btgwallet/wallet/txsizes v1.0.0/go.mod h1:9n3EAa5u2MxiCpsEvHqv1rIfD90dIKteiUJEcDecWM8=
 github.com/btgsuite/btgwallet/walletdb v1.0.0 h1:dNKIpyO0UDQo5n2wnmR8HA+QZqPQc18U9gCX+HaUhoo=
 github.com/btgsuite/btgwallet/walletdb v1.0.0/go.mod h1:zpxslVV6dtjZyj4aMZlODqAmoPmT8l9mSOSg34a6KOw=
+github.com/btgsuite/btgwallet/walletdb v1.1.0 h1:jS8YoYjku3nby5ad1IcEYR+2e4oZOqN+snbrvhbZ5RU=
+github.com/btgsuite/btgwallet/walletdb v1.1.0/go.mod h1:zpxslVV6dtjZyj4aMZlODqAmoPmT8l9mSOSg34a6KOw=
 github.com/btgsuite/btgwallet/wtxmgr v1.0.0 h1:3UGZo9u5O99V0HTHdied5fvFPau7YTs48oLgs77AjK0=
 github.com/btgsuite/btgwallet/wtxmgr v1.0.0/go.mod h1:OxkmuIQa5NXaGGoQBhOmwuUuBqEsUu5ByX2s/I7MG1M=
 github.com/coreos/bbolt v1.3.3 h1:n6AiVyVRKQFNb6mJlwESEvvLoDyiTzXX7ORAUlkeBdY=

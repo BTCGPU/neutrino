@@ -5,7 +5,7 @@ require (
 	github.com/btgsuite/btgd v0.0.0-20191022061529-182f0b5329b7
 	github.com/btgsuite/btgutil v0.0.0-20190712111807-e3467bf2e90e
 	github.com/btgsuite/btgwallet/wallet/txauthor v1.0.0
-	github.com/btgsuite/btgwallet/walletdb v1.0.0
+	github.com/btgsuite/btgwallet/walletdb v1.1.0
 	github.com/btgsuite/btgwallet/wtxmgr v1.0.0
 	github.com/davecgh/go-spew v1.1.1
 	github.com/golang/protobuf v1.3.2 // indirect
